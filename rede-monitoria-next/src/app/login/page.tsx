@@ -16,7 +16,7 @@ export default function Login(){
 
         console.log("Matrícula", matricula)
         console.log("Senha:", senha)
-        router.push("/turmas");
+        router.push("/");
     }
 
     return(
