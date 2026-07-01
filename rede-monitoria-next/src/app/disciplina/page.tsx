@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Material } from "@/types/material";
 import { useParams } from "next/navigation";
-
-type Material = {
-  id: string;
-  title: string;
-  link: string;
-};
+import { listarMateriais, criarMaterial, atualizarMaterial, deletarMaterial, } from "@/services/materialService";
 
 type Duvida = {
   id: string;
@@ -15,23 +11,69 @@ type Duvida = {
   author: string;
 };
 
-export default function Disciplina(){
+export default function Disciplina() {
   const { id } = useParams();
+  const disciplinaId = Array.isArray(id) ? id[0] : id;
+
   const [nome, setNome] = useState("Nome da disciplina");
   const [professor, setProfessor] = useState("Indefinido");
   const [turma, setTurma] = useState("-");
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [duvidas, setDuvidas] = useState<Duvida[]>([]);
+  const [titulo, setTitulo] = useState("");
+  const [link, setLink] = useState("");
+  const [materialEditando, setMaterialEditando] = useState<string | null>(null);
+
+  async function adicionarMaterial() {
+    if (!disciplinaId) {
+      console.error("ID da disciplina não encontrado.");
+      return;
+    }
+
+    try {
+      if (materialEditando) {
+        await atualizarMaterial(materialEditando, titulo, link);
+        setMaterialEditando(null);
+      } else {
+        await criarMaterial(disciplinaId, titulo, link);
+      }
+
+      setTitulo("");
+      setLink("");
+      await carregarMateriais();
+    } catch (error) {
+      console.error("Erro ao salvar material:", error);
+    }
+  }
+
+  async function excluirMaterial(idMaterial: string) {
+    try {
+      await deletarMaterial(idMaterial);
+      await carregarMateriais();
+    } catch (error) {
+      console.error("Erro ao excluir material:", error);
+    }
+  }
+
+  async function carregarMateriais() {
+    if (!id) {
+      return;
+    }
+
+    try {
+      const data = await listarMateriais(disciplinaId);
+      setMateriais(data);
+    } catch (error) {
+      console.error("Erro ao carregar materiais:", error);
+    }
+  }
 
   useEffect(() => {
     if (id) {
       setNome(`Disciplina ${id}`);
       setProfessor("Prof. Exemplo");
       setTurma("CT-01");
-      setMateriais([
-        { id: "1", title: "Aula 1 - Introdução", link: "#" },
-        { id: "2", title: "Aula 2 - Material de apoio", link: "#" },
-      ]);
+      carregarMateriais();
       setDuvidas([
         { id: "1", question: "Quando é a entrega do trabalho?", author: "Aluno A" },
         { id: "2", question: "Qual o peso da avaliação?", author: "Aluno B" },
@@ -71,12 +113,30 @@ export default function Disciplina(){
             <section className="grid gap-6 lg:grid-cols-2">
               <div className="bg-white rounded-3xl p-6 shadow-sm">
                 <h2 className="text-xl font-semibold text-gray-800">Materiais</h2>
-                <ul className="mt-4 space-y-4 text-gray-700">
+
+                <div className="mt-4 space-y-3">
+                  <input type="text" placeholder="Título do material" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-full rounded-lg border border-gray-300 p-2"/>
+                  <input type="text" placeholder="Link do material" value={link} onChange={(e) => setLink(e.target.value)} className="w-full rounded-lg border border-gray-300 p-2"/>
+                  <button onClick={adicionarMaterial}
+                    className="rounded-lg bg-green-700 px-4 py-2 text-white hover:bg-green-800">
+                    {materialEditando ? "Salvar Alterações" : "Adicionar Material"}
+                  </button>
+                </div>
+                <ul className="mt-6 space-y-4 text-gray-700">
                   {materiais.map((material) => (
-                    <li key={material.id}>
-                      <a href={material.link} className="font-medium text-green-800 hover:underline">
+                    <li key={material.id} className="flex items-center justify-between border-b pb-2">
+                      <a href={material.link} target="_blank" rel="noopener noreferrer" className="font-medium text-green-800 hover:underline"> 
                         {material.title}
                       </a>
+                      <div className="flex gap-2">
+                        <button onClick={() => {
+                            setMaterialEditando(material.id);
+                            setTitulo(material.title);
+                            setLink(material.link);
+                          }}
+                          className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700">Editar</button>
+                        <button onClick={() => excluirMaterial(material.id)} className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">Excluir</button>
+                      </div>
                     </li>
                   ))}
                 </ul>
