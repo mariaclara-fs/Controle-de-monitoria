@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cadastroSchema, CadastroFormData } from "@/schemas/cadastroSchema";
+import { supabase } from "@/services/supabase";
 
 export default function Cadastro() {
-
   const router = useRouter();
 
   const {
@@ -18,32 +18,55 @@ export default function Cadastro() {
     resolver: zodResolver(cadastroSchema)
   });
 
-  function onSubmit(data: CadastroFormData) {
+  async function onSubmit(data: CadastroFormData) {
+    const { data: matriculaExistente } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("matricula", data.matricula)
+      .single();
 
-    const usuariosSalvos = localStorage.getItem("usuarios");
-
-    const usuarios = usuariosSalvos
-      ? JSON.parse(usuariosSalvos)
-      : [];
-
-    const usuarioExistente = usuarios.find(
-      (usuario: CadastroFormData) =>
-        usuario.matricula === data.matricula
-    );
-
-    if (usuarioExistente) {
+    if (matriculaExistente) {
       alert("Matrícula já cadastrada");
       return;
     }
 
-    usuarios.push(data);
+    const { data: authData, error: authError } =
+      await supabase.auth.signUp({
+        email: data.email,
+        password: data.senha
+      });
 
-    localStorage.setItem(
-      "usuarios",
-      JSON.stringify(usuarios)
-    );
+    if (authError) {
+      alert("Este email já está cadastrado ou houve erro no cadastro");
+      console.log(authError);
+      return;
+    }
 
-    console.log("Usuário cadastrado:", data);
+    const userId = authData.user?.id;
+
+    if (!userId) {
+      alert("Erro ao criar usuário");
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert([
+        {
+          id: userId,
+          nome: data.nome,
+          matricula: Number(data.matricula),
+          perfil: "aluno"
+        }
+      ]);
+
+    if (profileError) {
+      alert("Erro ao salvar perfil");
+      console.log(profileError);
+      return;
+    }
+
+    alert("Cadastro realizado com sucesso!");
 
     router.push("/login");
   }
@@ -174,7 +197,6 @@ export default function Cadastro() {
 
           <p className="text-center mt-8 text-gray-600">
             Já possui uma conta?{" "}
-
             <Link
               href="/login"
               className="text-[#166534] font-bold hover:underline"
