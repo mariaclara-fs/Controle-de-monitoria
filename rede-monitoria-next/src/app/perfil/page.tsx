@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/services/supabase";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function Perfil() {
   const router = useRouter();
@@ -115,125 +116,127 @@ export default function Perfil() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <ProtectedRoute>
+      <div className="min-h-screen flex flex-col bg-gray-100">
 
-      <header className="bg-[#166534] text-white">
-        <div className="w-full px-6 py-2.5 flex items-center justify-between">
+        <header className="bg-[#166534] text-white">
+          <div className="w-full px-6 py-2.5 flex items-center justify-between">
 
-          <div className="flex items-center gap-3">
-            <img
-              src="/Logo_RDM.png"
-              alt="Rede de Monitoria"
-              className="w-9 h-9 rounded"
-            />
+            <div className="flex items-center gap-3">
+              <img
+                src="/Logo_RDM.png"
+                alt="Rede de Monitoria"
+                className="w-9 h-9 rounded"
+              />
 
-            <h1 className="font-bold text-lg">
-              Rede de Monitoria
+              <h1 className="font-bold text-lg">
+                Rede de Monitoria
+              </h1>
+            </div>
+
+            <h1 className="text-xl md:text-2xl font-bold">
+              Meu Perfil
             </h1>
+
+            <div className="relative">
+
+              <button
+                onClick={() => setMenuAberto(!menuAberto)}
+                className="w-9 h-9 rounded-full border border-white flex items-center justify-center hover:bg-white hover:text-[#166534] transition-all duration-200 cursor-pointer"
+              >
+                <i className="fa-solid fa-user"></i>
+              </button>
+
+              {menuAberto && (
+                <div className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+
+                  <Link
+                    href="/home_aluno"
+                    className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-100"
+                  >
+                    <i className="fa-solid fa-house"></i>
+                    Início
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <i className="fa-solid fa-right-from-bracket"></i>
+                    Sair
+                  </button>
+
+                </div>
+              )}
+
+            </div>
           </div>
+        </header>
 
-          <h1 className="text-xl md:text-2xl font-bold">
-            Meu Perfil
-          </h1>
+        <main className="flex-1 flex items-center justify-center px-6 py-12">
 
-          <div className="relative">
+          <div className="bg-white w-full max-w-xl rounded-xl shadow-sm p-8">
 
-            <button
-              onClick={() => setMenuAberto(!menuAberto)}
-              className="w-9 h-9 rounded-full border border-white flex items-center justify-center hover:bg-white hover:text-[#166534] transition-all duration-200 cursor-pointer"
-            >
-              <i className="fa-solid fa-user"></i>
-            </button>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8">
+              Editar informações
+            </h2>
 
-            {menuAberto && (
-              <div className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+            <div className="flex flex-col gap-5">
 
-                <Link
-                  href="/home_aluno"
-                  className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-100"
-                >
-                  <i className="fa-solid fa-house"></i>
-                  Início
-                </Link>
+              <div>
+                <label className="block mb-2">
+                  Nome
+                </label>
 
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-gray-100 cursor-pointer"
-                >
-                  <i className="fa-solid fa-right-from-bracket"></i>
-                  Sair
-                </button>
-
+                <input
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
+                />
               </div>
-            )}
 
-          </div>
-        </div>
-      </header>
+              <div>
+                <label className="block mb-2">
+                  Matrícula
+                </label>
 
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
+                <input
+                  value={matricula}
+                  onChange={(e) => setMatricula(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
+                />
+              </div>
 
-        <div className="bg-white w-full max-w-xl rounded-xl shadow-sm p-8">
+              <div>
+                <label className="block mb-2">
+                  Email
+                </label>
 
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">
-            Editar informações
-          </h2>
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
+                />
+              </div>
 
-          <div className="flex flex-col gap-5">
+              <button
+                onClick={handleSalvar}
+                className="bg-[#166534] text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition cursor-pointer"
+              >
+                Salvar alterações
+              </button>
 
-            <div>
-              <label className="block mb-2">
-                Nome
-              </label>
-
-              <input
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
-              />
             </div>
-
-            <div>
-              <label className="block mb-2">
-                Matrícula
-              </label>
-
-              <input
-                value={matricula}
-                onChange={(e) => setMatricula(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
-              />
-            </div>
-
-            <div>
-              <label className="block mb-2">
-                Email
-              </label>
-
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
-              />
-            </div>
-
-            <button
-              onClick={handleSalvar}
-              className="bg-[#166534] text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition cursor-pointer"
-            >
-              Salvar alterações
-            </button>
 
           </div>
 
-        </div>
+        </main>
 
-      </main>
+        <footer className="bg-[#166534] text-white text-center text-xs py-2.5">
+          &copy; 2026 - Rede de Monitoria. Todos os direitos reservados.
+        </footer>
 
-      <footer className="bg-[#166534] text-white text-center text-xs py-2.5">
-        &copy; 2026 - Rede de Monitoria. Todos os direitos reservados.
-      </footer>
-
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
