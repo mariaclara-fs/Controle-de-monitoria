@@ -1,24 +1,25 @@
 "use client";
 
-import { createContext } from "react";
+import { createContext, ReactNode, useMemo } from "react";
 
 type AuthContextType = {
-
+  usuario: null;
 };
 
-export const AuthContext = createContext<AuthContextType>(
-    {} as AuthContextType
-);
+export const AuthContext = createContext<AuthContextType>({
+  usuario: null
+});
 
 export function AuthProvider({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const value = useMemo(() => ({ usuario: null }), []);
 
-    return (
-        <AuthContext.Provider value={{}}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
