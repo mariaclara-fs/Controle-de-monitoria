@@ -25,9 +25,7 @@ export default function Disciplina(){
   const [duvidas, setDuvidas] = useState<Duvida[]>([]);
 
   useEffect(() => {
-    if (!id) return;
-
-    const timer = window.setTimeout(() => {
+    if (id) {
       setNome(`Disciplina ${id}`);
       setProfessor("Prof. Exemplo");
       setTurma("CT-01");
@@ -39,11 +37,7 @@ export default function Disciplina(){
         { id: "1", question: "Quando é a entrega do trabalho?", author: "Aluno A" },
         { id: "2", question: "Qual o peso da avaliação?", author: "Aluno B" },
       ]);
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
+    }
   }, [id]);
 
   return(

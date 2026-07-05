@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/services/supabase";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function Perfil() {
   const router = useRouter();
@@ -17,36 +18,36 @@ export default function Perfil() {
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
-    async function buscarUsuario() {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
+    buscarUsuario();
+  }, []);
 
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
+  async function buscarUsuario() {
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
 
-      setUserId(user.id);
-      setEmail(user.email || "");
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("nome, matricula")
-        .eq("id", user.id)
-        .single();
-
-      if (error || !data) {
-        alert("Erro ao carregar dados");
-        return;
-      }
-
-      setNome(data.nome);
-      setMatricula(String(data.matricula));
+    if (!user) {
+      router.replace("/login");
+      return;
     }
 
-    buscarUsuario();
-  }, [router]);
+    setUserId(user.id);
+    setEmail(user.email || "");
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("nome, matricula")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !data) {
+      alert("Erro ao carregar dados");
+      return;
+    }
+
+    setNome(data.nome);
+    setMatricula(String(data.matricula));
+  }
 
   async function handleSalvar() {
     const nomeValido = /^[A-Za-zÀ-ÿ\s]+$/.test(nome);
@@ -115,7 +116,8 @@ export default function Perfil() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <ProtectedRoute>
+      <div className="min-h-screen flex flex-col bg-gray-100">
 
         <header className="bg-[#166534] text-white">
           <div className="w-full px-6 py-2.5 flex items-center justify-between">
@@ -235,5 +237,6 @@ export default function Perfil() {
         </footer>
 
       </div>
+    </ProtectedRoute>
   );
 }
