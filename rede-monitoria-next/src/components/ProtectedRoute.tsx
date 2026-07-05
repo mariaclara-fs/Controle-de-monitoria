@@ -16,7 +16,7 @@ export default function ProtectedRoute({
 
   useEffect(() => {
     verificarUsuario();
-  }, []);
+  }, [router]);
 
   async function verificarUsuario() {
     const {
@@ -24,6 +24,18 @@ export default function ProtectedRoute({
     } = await supabase.auth.getUser();
 
     if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("ativo")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.ativo) {
+      await supabase.auth.signOut();
       router.replace("/login");
       return;
     }

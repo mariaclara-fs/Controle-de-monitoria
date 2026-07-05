@@ -32,6 +32,25 @@ export default function Login() {
       return;
     }
 
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("ativo")
+      .eq("id", sessao.user.id)
+      .single();
+
+    if (profileError) {
+      await supabase.auth.signOut();
+      alert("Erro ao verificar usuário.");
+      console.log(profileError);
+      return;
+    }
+
+    if (!profile.ativo) {
+      await supabase.auth.signOut();
+      alert("Sua conta está desativada. Entre em contato com o coordenador.");
+      return;
+    }
+
     localStorage.setItem(
       "usuarioLogado",
       JSON.stringify(sessao.user)
