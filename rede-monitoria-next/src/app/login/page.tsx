@@ -34,7 +34,7 @@ export default function Login() {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("ativo")
+      .select("ativo, perfil")
       .eq("id", sessao.user.id)
       .single();
 
@@ -58,7 +58,11 @@ export default function Login() {
 
     alert("Login realizado com sucesso!");
 
-    router.replace("/home_aluno");
+    if (profile.perfil === "coordenador") {
+      router.replace("/dashboard/coordenador");
+    } else {
+      router.replace("/home_aluno");
+    }
   }
 
   return (
