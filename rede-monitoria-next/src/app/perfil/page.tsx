@@ -16,6 +16,7 @@ export default function Perfil() {
   const [email, setEmail] = useState("");
 
   const [userId, setUserId] = useState("");
+  const [perfil, setPerfil] = useState("");
 
   useEffect(() => {
     buscarUsuario();
@@ -36,7 +37,7 @@ export default function Perfil() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("nome, matricula")
+      .select("nome, matricula, perfil")
       .eq("id", user.id)
       .single();
 
@@ -47,6 +48,7 @@ export default function Perfil() {
 
     setNome(data.nome);
     setMatricula(String(data.matricula));
+    setPerfil(data.perfil);
   }
 
   async function handleSalvar() {
@@ -151,7 +153,11 @@ export default function Perfil() {
                 <div className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg overflow-hidden z-50">
 
                   <Link
-                    href="/home_aluno"
+                    href={
+                      perfil === "coordenador"
+                        ? "/dashboard/coordenador"
+                        : "/home_aluno"
+                    }
                     className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-100"
                   >
                     <i className="fa-solid fa-house"></i>
