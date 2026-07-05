@@ -184,11 +184,16 @@ export default function Perfil() {
             <div className="flex flex-col gap-5">
 
               <div>
-                <label className="block mb-2">
+                <label
+                  htmlFor="nome"
+                  className="block mb-2"
+                >
                   Nome
                 </label>
 
                 <input
+                  id="nome"
+                  type="text"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
@@ -196,11 +201,17 @@ export default function Perfil() {
               </div>
 
               <div>
-                <label className="block mb-2">
+                <label
+                  htmlFor="matricula"
+                  className="block mb-2"
+                >
                   Matrícula
                 </label>
 
                 <input
+                  id="matricula"
+                  type="text"
+                  inputMode="numeric"
                   value={matricula}
                   onChange={(e) => setMatricula(e.target.value)}
                   className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
@@ -208,11 +219,16 @@ export default function Perfil() {
               </div>
 
               <div>
-                <label className="block mb-2">
-                  Email
+                <label
+                  htmlFor="email"
+                  className="block mb-2"
+                >
+                  E-mail
                 </label>
 
                 <input
+                  id="email"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-green-600"
