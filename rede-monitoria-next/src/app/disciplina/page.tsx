@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { supabase } from "@/services/supabase";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 type Material = {
@@ -23,6 +25,13 @@ export default function Disciplina(){
   const [turma, setTurma] = useState("-");
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [duvidas, setDuvidas] = useState<Duvida[]>([]);
+  const [menuAberto, setMenuAberto] = useState(false);
+  const router = useRouter();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  }
 
   useEffect(() => {
     if (id) {
@@ -40,72 +49,167 @@ export default function Disciplina(){
     }
   }, [id]);
 
-  return(
-    <ProtectedRoute>
-      <div className="bg-[#f5f5f2] min-h-screen">
-        <div className="flex flex-col min-h-screen">
-          <header className="flex items-center justify-between px-6 py-4 bg-gradient-to-br from-green-500 to-green-800">
-            <div className="flex items-center gap-3">
-              <img src="/Logo_RDM.png" className="w-14 md:w-20" alt="logo" />
-              <div>
-                <h1 className="font-bold text-white">Rede de</h1>
-                <h1 className="font-bold text-white">Monitoria IFPB</h1>
+  return (
+  <ProtectedRoute>
+    <div className="min-h-screen flex flex-col bg-gray-100">
+
+      <header className="bg-[#166534] text-white">
+        <div className="w-full px-6 py-2.5 flex items-center justify-between">
+
+          <div className="flex items-center gap-3">
+            <img
+              src="/Logo_RDM.png"
+              alt="Rede de Monitoria"
+              className="w-9 h-9 rounded"
+            />
+
+            <h1 className="font-bold text-lg">
+              Rede de Monitoria
+            </h1>
+          </div>
+
+          <h1 className="text-xl md:text-2xl font-bold">
+            Disciplina
+          </h1>
+
+          <div className="relative">
+
+            <button
+              onClick={() => setMenuAberto(!menuAberto)}
+              className="w-9 h-9 rounded-full border border-white flex items-center justify-center font-medium text-white hover:bg-white hover:text-[#166534] transition-all duration-200 cursor-pointer"
+            >
+              <i className="fa-solid fa-user text-base"></i>
+            </button>
+
+            {menuAberto && (
+              <div className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+
+                <Link
+                  href="/perfil"
+                  className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-gray-100"
+                >
+                  <i className="fa-solid fa-user"></i>
+                  Meu perfil
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-gray-100 cursor-pointer"
+                >
+                  <i className="fa-solid fa-right-from-bracket"></i>
+                  Sair
+                </button>
+
               </div>
+            )}
+
+          </div>
+
+        </div>
+      </header>
+
+      <main className="flex-1 px-6 py-16">
+
+        <div className="max-w-6xl mx-auto">
+
+          <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+              <div>
+                <h2 className="text-3xl font-bold text-[#166534] mb-2">
+                  {nome}
+                </h2>
+
+                <p className="text-gray-600">
+                  Professor: {professor}
+                </p>
+              </div>
+
+              <div className="text-left md:text-right">
+                <p className="text-sm text-gray-500">
+                  Período
+                </p>
+
+                <p className="text-xl font-semibold text-gray-800">
+                  {turma}
+                </p>
+              </div>
+
             </div>
-            <h1 className="text-3xl font-bold text-white hidden md:block">Disciplina</h1>
-          </header>
 
-          <main className="flex flex-1 px-6 py-8">
-            <div className="max-w-6xl mx-auto w-full space-y-6">
-              <section className="bg-white rounded-3xl p-8 shadow-sm">
-                <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h1 className="text-4xl font-bold text-green-900">{nome}</h1>
-                    <p className="mt-2 text-gray-700">{professor}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">2026.1</p>
-                    <p className="text-xl font-semibold text-gray-900">{turma}</p>
-                  </div>
-                </div>
-              </section>
+          </div>
 
-              <section className="grid gap-6 lg:grid-cols-2">
-                <div className="bg-white rounded-3xl p-6 shadow-sm">
-                  <h2 className="text-xl font-semibold text-gray-800">Materiais</h2>
-                  <ul className="mt-4 space-y-4 text-gray-700">
-                    {materiais.map((material) => (
-                      <li key={material.id}>
-                        <a href={material.link} className="font-medium text-green-800 hover:underline">
-                          {material.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                <div className="grid gap-6">
-                  <div className="bg-white rounded-3xl p-6 shadow-sm">
-                    <h2 className="text-xl font-semibold text-gray-800">Dúvidas</h2>
-                    <ul className="mt-4 space-y-3 text-gray-700">
-                      {duvidas.map((duvida) => (
-                        <li key={duvida.id}>
-                          <p className="font-medium">{duvida.question}</p>
-                          <p className="text-sm text-gray-500">{duvida.author}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </section>
+            <div className="bg-white rounded-xl shadow-sm p-8">
+
+              <h3 className="text-xl font-bold text-[#166534] mb-6">
+                Materiais
+              </h3>
+
+              <div className="space-y-4">
+
+                {materiais.map((material) => (
+                  <a
+                    key={material.id}
+                    href={material.link}
+                    className="flex items-center justify-between border border-gray-200 rounded-lg p-4 hover:border-green-700 hover:bg-green-50 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <i className="fa-solid fa-file-lines text-[#166534]"></i>
+
+                      <span className="font-medium text-gray-800">
+                        {material.title}
+                      </span>
+                    </div>
+
+                    <i className="fa-solid fa-arrow-up-right-from-square text-gray-500"></i>
+                  </a>
+                ))}
+
+              </div>
+
             </div>
-          </main>
+
+            <div className="bg-white rounded-xl shadow-sm p-8">
+
+              <h3 className="text-xl font-bold text-[#166534] mb-6">
+                Dúvidas
+              </h3>
+
+              <div className="space-y-4">
+
+                {duvidas.map((duvida) => (
+                  <div
+                    key={duvida.id}
+                    className="border border-gray-200 rounded-lg p-4"
+                  >
+                    <p className="font-semibold text-gray-800 mb-2">
+                      {duvida.question}
+                    </p>
+
+                    <p className="text-sm text-gray-500">
+                      {duvida.author}
+                    </p>
+                  </div>
+                ))}
+
+              </div>
+
+            </div>
+
+          </section>
+
         </div>
 
-        <footer className="bg-[#166534] text-white text-center text-xs py-2">
-          &copy; 2026 - Rede de Monitoria. Todos os direitos reservados.
-        </footer>
-      </div>
-    </ProtectedRoute>
-  );
+      </main>
+
+      <footer className="bg-[#166534] text-white text-center text-xs py-2.5">
+        &copy; 2026 - Rede de Monitoria. Todos os direitos reservados.
+      </footer>
+
+    </div>
+  </ProtectedRoute>
+);
 }
