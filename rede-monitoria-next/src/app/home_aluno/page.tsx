@@ -1,16 +1,53 @@
 "use client";
 
-import { disciplinas } from "@/data/turmas";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/services/supabase";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { listarTurmas } from "@/services/turmaService";
+import type { Turma } from "@/types/turma";
 
 export default function HomeAluno() {
   const [menuAberto, setMenuAberto] = useState(false);
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [carregandoTurmas, setCarregandoTurmas] = useState(true);
+  const [erroTurmas, setErroTurmas] = useState("");
 
   const router = useRouter();
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarTurmas() {
+      setErroTurmas("");
+      setCarregandoTurmas(true);
+
+      try {
+        const dados = await listarTurmas();
+
+        if (ativo) {
+          setTurmas(dados ?? []);
+        }
+      } catch (error) {
+        console.error(error);
+
+        if (ativo) {
+          setErroTurmas("Não foi possível carregar as turmas no momento.");
+        }
+      } finally {
+        if (ativo) {
+          setCarregandoTurmas(false);
+        }
+      }
+    }
+
+    carregarTurmas();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -94,27 +131,41 @@ export default function HomeAluno() {
 
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-              {disciplinas.map((disciplina, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-xl shadow-sm p-8 hover:-translate-y-1 hover:shadow-md transition-all duration-300"
-                >
-                  <h3 className="text-xl font-bold text-[#166534] mb-4">
-                    {disciplina.nome}
-                  </h3>
-
-                  <p className="text-gray-600 mb-6">
-                    Monitor: {disciplina.monitor}
-                  </p>
-
-                  <Link
-                    href="/disciplina"
-                    className="inline-block bg-[#166534] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                  >
-                    Acessar turma
-                  </Link>
+              {carregandoTurmas ? (
+                <div className="md:col-span-2 lg:col-span-3 rounded-xl bg-white p-8 text-center text-gray-600">
+                  Carregando turmas...
                 </div>
-              ))}
+              ) : erroTurmas ? (
+                <div className="md:col-span-2 lg:col-span-3 rounded-xl bg-white p-8 text-center text-red-600">
+                  {erroTurmas}
+                </div>
+              ) : turmas.length === 0 ? (
+                <div className="md:col-span-2 lg:col-span-3 rounded-xl bg-white p-8 text-center text-gray-600">
+                  Nenhuma turma cadastrada ainda.
+                </div>
+              ) : (
+                turmas.map((turma) => (
+                  <div
+                    key={turma.id}
+                    className="bg-white rounded-xl shadow-sm p-8 hover:-translate-y-1 hover:shadow-md transition-all duration-300"
+                  >
+                    <h3 className="text-xl font-bold text-[#166534] mb-4">
+                      {turma.nome}
+                    </h3>
+
+                    <p className="text-gray-600 mb-6">
+                      Curso: {turma.curso}
+                    </p>
+
+                    <Link
+                      href={`/disciplina/${turma.id}`}
+                      className="inline-block bg-[#166534] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      Acessar turma
+                    </Link>
+                  </div>
+                ))
+              )}
 
             </section>
 
