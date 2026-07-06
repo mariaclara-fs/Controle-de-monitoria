@@ -26,7 +26,7 @@ export default function EditarTurmaPage() {
         const [{ data: turma, error }, { data: alunosDaTurma, error: erroAlunos }] = await Promise.all([
           supabase
             .from("turmas")
-            .select("*, profiles!monitor_id(nome)")
+            .select("id, nome, curso, monitor_id")
             .eq("id", id)
             .single(),
           supabase
@@ -39,12 +39,28 @@ export default function EditarTurmaPage() {
         if (error || !turma) throw new Error("Erro ao carregar");
         if (erroAlunos) throw erroAlunos;
 
+        let opcoesMonitor = (alunosDaTurma ?? []).map((aluno) => ({ id: aluno.id, nome: aluno.nome }));
+
+        if (turma.monitor_id) {
+          const { data: monitorAtual, error: erroMonitorAtual } = await supabase
+            .from("profiles")
+            .select("id, nome")
+            .eq("id", turma.monitor_id)
+            .maybeSingle();
+
+          if (erroMonitorAtual) throw erroMonitorAtual;
+
+          if (monitorAtual && !opcoesMonitor.some((opcao) => opcao.id === monitorAtual.id)) {
+            opcoesMonitor = [{ id: monitorAtual.id, nome: monitorAtual.nome }, ...opcoesMonitor];
+          }
+        }
+
         setDefaultValues({
           nome: turma.nome,
           curso: turma.curso,
         });
 
-        setAlunos(alunosDaTurma ?? []);
+        setAlunos(opcoesMonitor);
         setMonitorSelecionado(turma.monitor_id ?? "");
 
       } catch {
@@ -106,8 +122,8 @@ export default function EditarTurmaPage() {
           return;
         }
 
-        if (alunoSelecionado.perfil !== "aluno") {
-          alert("Selecione um usuário com perfil de aluno para definir como monitor.");
+        if (alunoSelecionado.perfil !== "aluno" && alunoSelecionado.perfil !== "monitor") {
+          alert("Selecione um usuário com perfil de aluno ou monitor para definir como monitor da turma.");
           setSalvando(false);
           return;
         }
