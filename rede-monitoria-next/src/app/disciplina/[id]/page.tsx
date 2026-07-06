@@ -14,12 +14,6 @@ type Material = {
   turma_id?: string;
 };
 
-type Duvida = {
-  id: string;
-  question: string;
-  author: string;
-};
-
 export default function Disciplina(){
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -32,7 +26,6 @@ export default function Disciplina(){
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
   const [carregandoMateriais, setCarregandoMateriais] = useState(false);
   const [erroMateriais, setErroMateriais] = useState("");
-  const [duvidas, setDuvidas] = useState<Duvida[]>([]);
   const [menuAberto, setMenuAberto] = useState(false);
   const router = useRouter();
 
@@ -150,10 +143,6 @@ useEffect(() => {
     if (id) {
       carregarDadosTurma();
       carregarMateriais();
-      setDuvidas([
-        { id: "1", question: "Quando é a entrega do trabalho?", author: "Aluno A" },
-        { id: "2", question: "Qual o peso da avaliação?", author: "Aluno B" },
-      ]);
     }
   }, [id]);
 
@@ -248,7 +237,7 @@ useEffect(() => {
 
           </div>
 
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <section className="grid grid-cols-1 gap-8">
 
             <div className="bg-white rounded-xl shadow-sm p-8">
 
@@ -346,33 +335,6 @@ useEffect(() => {
                     ))}
                   </div>
                 )}
-              </div>
-
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-8">
-
-              <h3 className="text-xl font-bold text-[#166534] mb-6">
-                Dúvidas
-              </h3>
-
-              <div className="space-y-4">
-
-                {duvidas.map((duvida) => (
-                  <div
-                    key={duvida.id}
-                    className="border border-gray-200 rounded-lg p-4"
-                  >
-                    <p className="font-semibold text-gray-800 mb-2">
-                      {duvida.question}
-                    </p>
-
-                    <p className="text-sm text-gray-500">
-                      {duvida.author}
-                    </p>
-                  </div>
-                ))}
-
               </div>
 
             </div>
