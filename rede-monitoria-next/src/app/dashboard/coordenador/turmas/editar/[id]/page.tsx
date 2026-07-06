@@ -111,7 +111,7 @@ export default function EditarTurmaPage() {
 
       if (erroUpdate) throw erroUpdate;
 
-      alert("Turma updated com sucesso!");
+      alert("Turma editada com sucesso!");
       router.push("/dashboard/coordenador");
 
     } catch (error) {
@@ -177,16 +177,17 @@ export default function EditarTurmaPage() {
               onSubmit={handleUpdate}
             >
               <div className="mb-6 mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="nomeMonitor" className="block text-sm font-medium text-gray-700 mb-2">
                   Nome do Monitor Responsável
                 </label>
                 <input
+                  id="nomeMonitor"
                   type="text"
                   value={nomeMonitor}
                   onChange={(e) => setNomeMonitor(e.target.value)}
                   placeholder="Ex: João Silva Santos"
                   disabled={salvando}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#166534] focus:border-transparent outline-none disabled:bg-gray-100 text-gray-800"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-green-600 focus:outline-none disabled:bg-gray-100 text-gray-800"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Insira o nome completo ou exatamente como o monitor se cadastrou. Deixe em branco para remover o monitor.
