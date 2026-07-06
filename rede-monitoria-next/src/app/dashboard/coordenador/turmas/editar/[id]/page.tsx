@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TurmaForm from "@/components/turmas/TurmaForm";
-import { buscarTurmaPorId } from "@/services/turmaService";
 import { TurmaFormData } from "@/schemas/turmaSchema";
 import { supabase } from "@/services/supabase";
 
@@ -18,28 +17,35 @@ export default function EditarTurmaPage() {
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [defaultValues, setDefaultValues] = useState<TurmaFormData>();
-  
-  const [nomeMonitor, setNomeMonitor] = useState("");
+  const [alunos, setAlunos] = useState<{ id: string; nome: string }[]>([]);
+  const [monitorSelecionado, setMonitorSelecionado] = useState("");
 
   useEffect(() => {
     async function carregar() {
       try {
-        const { data: turma, error } = await supabase
-          .from("turmas")
-          .select("*, profiles!monitor_id(nome)") 
-          .eq("id", id)
-          .single();
+        const [{ data: turma, error }, { data: alunosDaTurma, error: erroAlunos }] = await Promise.all([
+          supabase
+            .from("turmas")
+            .select("*, profiles!monitor_id(nome)")
+            .eq("id", id)
+            .single(),
+          supabase
+            .from("profiles")
+            .select("id, nome")
+            .eq("perfil", "aluno")
+            .order("nome", { ascending: true }),
+        ]);
 
         if (error || !turma) throw new Error("Erro ao carregar");
+        if (erroAlunos) throw erroAlunos;
 
         setDefaultValues({
           nome: turma.nome,
           curso: turma.curso,
         });
 
-        if (turma.profiles?.nome) {
-          setNomeMonitor(turma.profiles.nome);
-        }
+        setAlunos(alunosDaTurma ?? []);
+        setMonitorSelecionado(turma.monitor_id ?? "");
 
       } catch {
         alert("Erro ao carregar turma.");
@@ -58,7 +64,7 @@ export default function EditarTurmaPage() {
     try {
       const nome = data.nome.trim();
       const curso = data.curso.trim();
-      const nomeLimpo = nomeMonitor.trim();
+      const monitorId = monitorSelecionado.trim();
 
       const { data: turmaExistente } = await supabase
         .from("turmas")
@@ -74,40 +80,65 @@ export default function EditarTurmaPage() {
       }
 
       let monitorUuid: string | null = null;
+      let monitorAnteriorId: string | null = null;
 
-      if (nomeLimpo !== "") {
-        const { data: perfilMonitor, error: erroPerfil } = await supabase
+      const { data: turmaAtual, error: erroTurmaAtual } = await supabase
+        .from("turmas")
+        .select("monitor_id")
+        .eq("id", id)
+        .single();
+
+      if (erroTurmaAtual) throw erroTurmaAtual;
+      monitorAnteriorId = turmaAtual?.monitor_id ?? null;
+
+      if (monitorId !== "") {
+        const { data: alunoSelecionado, error: erroPerfil } = await supabase
           .from("profiles")
           .select("id, perfil")
-          .ilike("nome", nomeLimpo)
+          .eq("id", monitorId)
           .maybeSingle();
 
         if (erroPerfil) throw erroPerfil;
 
-        if (!perfilMonitor) {
-          alert(`Nenhum usuário encontrado com o nome "${nomeLimpo}". Certifique-se de que ele já possui cadastro.`);
+        if (!alunoSelecionado) {
+          alert("O aluno selecionado não foi encontrado. Tente novamente.");
           setSalvando(false);
           return;
         }
 
-        if (perfilMonitor.perfil !== "monitor") {
-          alert("O usuário encontrado possui esse nome, mas o perfil dele não é 'monitor'.");
+        if (alunoSelecionado.perfil !== "aluno") {
+          alert("Selecione um usuário com perfil de aluno para definir como monitor.");
           setSalvando(false);
           return;
         }
 
-        monitorUuid = perfilMonitor.id;
+        monitorUuid = alunoSelecionado.id;
       }
 
-  
       const { error: erroUpdate } = await supabase
         .from("turmas")
         .update({
           nome,
           curso,
-          monitor_id: monitorUuid 
+          monitor_id: monitorUuid,
         })
         .eq("id", id);
+
+      if (erroUpdate) throw erroUpdate;
+
+      if (monitorAnteriorId && monitorAnteriorId !== monitorUuid) {
+        await supabase
+          .from("profiles")
+          .update({ perfil: "aluno", turma_id: null })
+          .eq("id", monitorAnteriorId);
+      }
+
+      if (monitorUuid) {
+        await supabase
+          .from("profiles")
+          .update({ perfil: "monitor", turma_id: id })
+          .eq("id", monitorUuid);
+      }
 
       if (erroUpdate) throw erroUpdate;
 
@@ -178,19 +209,24 @@ export default function EditarTurmaPage() {
             >
               <div className="mb-6 mt-4">
                 <label htmlFor="nomeMonitor" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nome do Monitor Responsável
+                  Aluno monitor responsável
                 </label>
-                <input
+                <select
                   id="nomeMonitor"
-                  type="text"
-                  value={nomeMonitor}
-                  onChange={(e) => setNomeMonitor(e.target.value)}
-                  placeholder="Ex: João Silva Santos"
+                  value={monitorSelecionado}
+                  onChange={(e) => setMonitorSelecionado(e.target.value)}
                   disabled={salvando}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-green-600 focus:outline-none disabled:bg-gray-100 text-gray-800"
-                />
+                >
+                  <option value="">Nenhum monitor</option>
+                  {alunos.map((aluno) => (
+                    <option key={aluno.id} value={aluno.id}>
+                      {aluno.nome}
+                    </option>
+                  ))}
+                </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Insira o nome completo ou exatamente como o monitor se cadastrou. Deixe em branco para remover o monitor.
+                  Selecione um aluno para definir como monitor da turma. Deixe em branco para remover o monitor.
                 </p>
               </div>
             </TurmaForm>
