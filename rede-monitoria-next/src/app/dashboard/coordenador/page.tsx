@@ -34,6 +34,8 @@ export default function DashboardCoordenador() {
   const router = useRouter();
 
   const [menuAberto, setMenuAberto] = useState(false);
+  const [acessoPermitido, setAcessoPermitido] = useState(false);
+  const [carregandoAcesso, setCarregandoAcesso] = useState(true);
 
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -141,12 +143,58 @@ export default function DashboardCoordenador() {
   }
 
   useEffect(() => {
+    let ativo = true;
 
-    carregarTurmas();
+    async function verificarAcesso() {
+      setCarregandoAcesso(true);
 
-    carregarUsuarios();
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-  }, []);
+        if (userError || !user) {
+          if (ativo) {
+            router.replace("/login");
+          }
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("perfil")
+          .eq("id", user.id)
+          .single();
+
+        if (!ativo) return;
+
+        if (error || data?.perfil !== "coordenador") {
+          router.replace("/home_aluno");
+          return;
+        }
+
+        setAcessoPermitido(true);
+        await carregarTurmas();
+        await carregarUsuarios();
+      } catch (error) {
+        console.error("Erro ao validar acesso do coordenador:", error);
+        if (ativo) {
+          router.replace("/home_aluno");
+        }
+      } finally {
+        if (ativo) {
+          setCarregandoAcesso(false);
+        }
+      }
+    }
+
+    verificarAcesso();
+
+    return () => {
+      ativo = false;
+    };
+  }, [router]);
 
   const totalPaginasUsuarios = Math.max(
     1,
@@ -167,6 +215,16 @@ export default function DashboardCoordenador() {
     (paginaTurmas - 1) * ITENS_POR_PAGINA,
     paginaTurmas * ITENS_POR_PAGINA
   );
+
+  if (carregandoAcesso || !acessoPermitido) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+          <p className="text-gray-600 text-lg">Carregando...</p>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
