@@ -26,6 +26,7 @@ export default function Disciplina(){
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
   const [carregandoMateriais, setCarregandoMateriais] = useState(false);
   const [erroMateriais, setErroMateriais] = useState("");
+  const [perfilUsuario, setPerfilUsuario] = useState("aluno");
   const [menuAberto, setMenuAberto] = useState(false);
   const router = useRouter();
 
@@ -117,6 +118,35 @@ async function handleSalvarMaterial(event: FormEvent<HTMLFormElement>) {
   }
 
 useEffect(() => {
+    async function carregarPerfil() {
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          setPerfilUsuario("aluno");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("perfil")
+          .eq("id", user.id)
+          .single();
+
+        if (!error && data?.perfil) {
+          setPerfilUsuario(data.perfil);
+        } else {
+          setPerfilUsuario("aluno");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil do usuário:", error);
+        setPerfilUsuario("aluno");
+      }
+    }
+
     async function carregarDadosTurma() {
       if (!id) return;
 
@@ -139,6 +169,8 @@ useEffect(() => {
         console.error("Erro ao carregar dados da turma:", error);
       }
     }
+
+    carregarPerfil();
 
     if (id) {
       carregarDadosTurma();
@@ -238,14 +270,12 @@ useEffect(() => {
           </div>
 
           <section className="grid grid-cols-1 gap-8">
+            {perfilUsuario === "monitor" ? (
+              <div className="bg-white rounded-xl shadow-sm p-8">
+                <h3 className="text-xl font-bold text-[#166534] mb-6">
+                  Adicionar material
+                </h3>
 
-            <div className="bg-white rounded-xl shadow-sm p-8">
-
-              <h3 className="text-xl font-bold text-[#166534] mb-6">
-                Materiais
-              </h3>
-
-              <div className="space-y-4">
                 <form onSubmit={handleSalvarMaterial} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Título do material</label>
@@ -290,8 +320,16 @@ useEffect(() => {
                     ) : null}
                   </div>
                 </form>
+              </div>
+            ) : null}
 
-      {carregandoMateriais ? (
+            <div className="bg-white rounded-xl shadow-sm p-8">
+              <h3 className="text-xl font-bold text-[#166534] mb-6">
+                Materiais
+              </h3>
+
+              <div className="space-y-4">
+                {carregandoMateriais ? (
                   <p className="text-sm text-gray-500">Carregando materiais...</p>
                 ) : materiais.length === 0 ? (
                   <p className="text-sm text-gray-500">Nenhum material cadastrado ainda.</p>
@@ -315,30 +353,31 @@ useEffect(() => {
                             <p className="text-xs text-gray-500 mt-1">{material.arquivo_url}</p>
                           </div>
 
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleEditarMaterial(material)} // <<< ADICIONE ESSA LINHA AQUI
-                              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition">
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleExcluirMaterial(material.id)}
-                              className="rounded-lg border border-red-500 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100 transition"
-                            >
-                              Excluir
-                            </button>
-                          </div>
+                          {perfilUsuario === "monitor" ? (
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleEditarMaterial(material)}
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExcluirMaterial(material.id)}
+                                className="rounded-lg border border-red-500 bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100 transition"
+                              >
+                                Excluir
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-
             </div>
-
           </section>
 
         </div>
