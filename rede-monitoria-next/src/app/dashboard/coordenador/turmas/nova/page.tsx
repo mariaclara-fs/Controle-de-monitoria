@@ -99,7 +99,7 @@ export default function NovaTurmaPage() {
 
               <button
                 onClick={() => setMenuAberto(!menuAberto)}
-                className="w-9 h-9 rounded-full border border-white flex items-center justify-center hover:bg-white hover:text-[#166534] transition cursor-pointer"
+                className="w-9 h-9 rounded-full border border-white flex items-center justify-center hover:bg-white hover:text-[#166534] transition-all duration-200 cursor-pointer"
               >
                 <i className="fa-solid fa-user"></i>
               </button>
