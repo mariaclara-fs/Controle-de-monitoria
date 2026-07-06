@@ -153,13 +153,18 @@ useEffect(() => {
       try {
         const { data, error } = await supabase
           .from("turmas")
-          .select("nome, curso")
+          .select("nome, curso, monitor_id, profiles!monitor_id(nome)")
           .eq("id", id)
           .single();
 
         if (data && !error) {
+          const profilesData = (data as { profiles?: { nome?: string } | Array<{ nome?: string }> }).profiles;
+          const monitorNome = Array.isArray(profilesData)
+            ? profilesData[0]?.nome
+            : profilesData?.nome;
+
           setNome(data.nome);
-          setProfessor(data.curso); 
+          setProfessor(monitorNome ?? "Indefinido");
           setTurma("CT-01");
         } else {
           setNome("Disciplina não encontrada");
@@ -251,7 +256,7 @@ useEffect(() => {
                 </h2>
 
                 <p className="text-gray-600">
-                  Professor: {professor}
+                  Monitor: {professor}
                 </p>
               </div>
 
