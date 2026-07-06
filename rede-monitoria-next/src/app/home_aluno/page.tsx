@@ -24,13 +24,11 @@ export default function HomeAluno() {
       setCarregandoTurmas(true);
 
       try {
-        // 1. Obtém o usuário logado
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id;
 
         if (!userId) throw new Error("Usuário não autenticado");
 
-        // 2. Busca o perfil para identificar o tipo de usuário (aluno ou monitor)
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("perfil, turma_id")
@@ -38,27 +36,36 @@ export default function HomeAluno() {
           .single();
 
         if (profileError) throw profileError;
-        
+
         if (ativo) setPerfilUsuario(profile.perfil);
 
-        // 3. Aplica a regra de negócio baseada no perfil
         if (profile.perfil === "monitor") {
-          // Monitor: Só vê a turma na qual foi designado
-          if (!profile.turma_id) {
-            if (ativo) setTurmas([]); 
-            return;
+          let turmaMonitor = null;
+
+          if (profile.turma_id) {
+            const { data: turmaPorId, error: errorTurmaPorId } = await supabase
+              .from("turmas")
+              .select("*")
+              .eq("id", profile.turma_id)
+              .maybeSingle();
+
+            if (errorTurmaPorId) throw errorTurmaPorId;
+            turmaMonitor = turmaPorId;
           }
 
-          const { data: turmaMonitor, error: errorTurma } = await supabase
-            .from("turmas")
-            .select("*")
-            .eq("id", profile.turma_id);
+          if (!turmaMonitor) {
+            const { data: turmaVinculada, error: errorTurmaVinculada } = await supabase
+              .from("turmas")
+              .select("*")
+              .eq("monitor_id", userId)
+              .maybeSingle();
 
-          if (errorTurma) throw errorTurma;
-          if (ativo) setTurmas(turmaMonitor ?? []);
+            if (errorTurmaVinculada) throw errorTurmaVinculada;
+            turmaMonitor = turmaVinculada;
+          }
 
+          if (ativo) setTurmas(turmaMonitor ? [turmaMonitor] : []);
         } else {
-          // Aluno (ou outros perfis): Vê TODAS as turmas do sistema comercial livremente
           const { data: todasTurmas, error: errorTodas } = await supabase
             .from("turmas")
             .select("*");
